@@ -40,9 +40,9 @@ lapply(packages, require, character.only = TRUE)
 ## Load functions
 
 ```
-source("VF_expts.R")
-source("VF_functions.R")
-source("VF_utils.R")
+source("vFI_expts.R")
+source("vFI_functions.R")
+source("vFI_utils.R")
 ```
 
 
@@ -74,11 +74,11 @@ save_results(results, expt = "I")
 
 ## Sample code
 
-Please refer to ```VF.R``` as the starting point for running all synthetic experiments, which we recommend running on a high-performance computing cluster. 
+Please refer to ```vFI.R``` as the starting point for running all synthetic experiments, which we recommend running on a high-performance computing cluster. 
 
 ## Train models
 
-Please refer to ```VF_functions.R``` and ```VF_expts.R``` to see how the models are trained. ```yname``` is the dependent variable you're interested in predicting. 
+Please refer to ```vFI_functions.R``` and ```vFI_expts.R``` to see how the models are trained. ```yname``` is the dependent variable you're interested in predicting. 
 
 ```
 models <- fit_models(traindata, yname, expt = "I")
@@ -95,7 +95,7 @@ interpretable_ML_plot(yname, mae, type) #type = c("feature_importance", "margina
 
 ## Plot results
 
-Please refer to ```VF_Figures.R``` to recreate Figures 4,5 and Supplemental Figure 1 in the main manuscript. 
+Please refer to ```vFI_Figures.R``` to recreate Figures 4,5 and Supplemental Figure 1 in the main manuscript. 
 
 ## References
 Please refer to the main manuscript for all relevant references. 

@@ -1,7 +1,7 @@
 setwd("~")
-source("VF_expts.R")
-source("VF_functions.R")
-source("VF_utils.R")
+source("vFI_expts.R")
+source("vFI_functions.R")
+source("vFI_utils.R")
 
 data <- read.csv("Data/df_video_features.csv", header = TRUE, stringsAsFactors = FALSE)
 df <- read_data(data = data, summary_phenotypes = "median", type = "")

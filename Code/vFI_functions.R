@@ -341,7 +341,7 @@ performance_measure <- function(models,yname,testdata, expt = ""){
 		rmse_Q1 <- c(sqrt(mean((Ytest-age_linear_hat_Q1)^2)),sqrt(mean((Ytest-age_nonlinear_hat_Q1)^2)),sqrt(mean((Ytest-rfhat_Q1)^2)),sqrt(mean((Ytest-rf_age_hat_Q1)^2)))
 		R2_Q1 <- c(cor(Ytest,age_linear_hat_Q1)^2,cor(Ytest,age_nonlinear_hat_Q1)^2,cor(Ytest,rfhat_Q1)^2,cor(Ytest,rf_age_hat_Q1)^2)
 
-		mae_Q3 <- c(mean(abs(Ytest-age_linear_hat_Q3)),mean(abs(Ytest-age_nonlinear_hat_Q3)),mean(abs(Ytest-rfhat_Q3)),mean(abs(Ytest-rf_age_hat_Q3)))
+list <- list()		mae_Q3 <- c(mean(abs(Ytest-age_linear_hat_Q3)),mean(abs(Ytest-age_nonlinear_hat_Q3)),mean(abs(Ytest-rfhat_Q3)),mean(abs(Ytest-rf_age_hat_Q3)))
 		rmse_Q3 <- c(sqrt(mean((Ytest-age_linear_hat_Q3)^2)),sqrt(mean((Ytest-age_nonlinear_hat_Q3)^2)),sqrt(mean((Ytest-rfhat_Q3)^2)),sqrt(mean((Ytest-rf_age_hat_Q3)^2)))
 		R2_Q3 <- c(cor(Ytest,age_linear_hat_Q3)^2,cor(Ytest,age_nonlinear_hat_Q3)^2,cor(Ytest,rfhat_Q3)^2,cor(Ytest,rf_age_hat_Q3)^2)
 
@@ -935,6 +935,7 @@ plot_frailty_re <- function(data){
 
 	df <- data
 	frailty_parameters <- c("Alopecia","Loss.of.fur.colour","Dermatitis","Loss.of.whiskers","Coat.condition","Piloerection","Cataracts","Eye.discharge.swelling","Microphthalmia","Corneal.opacity","Nasal.discharge","Rectal.prolapse","Vaginal.uterine.","Diarrhea","Vestibular.disturbance","Vision.loss..Visual.Placing.","Menace.reflex","Tail.stiffening","Gait.disorders","Tremor","Tumours","Distended.abdomen","Kyphosis","Body.condition","Breathing.rate.depth","Malocclusions","Righting.Reflex")
+	names(df)[names(df) == "Age.at.Test"] <- "TestAge"
 	tmp <- numeric()
 	for (x in seq(length(frailty_parameters))){
 		#cat('frailty_parameter = ', frailty_parameters[x], "\n"); 

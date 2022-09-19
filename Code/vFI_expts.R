@@ -1,5 +1,5 @@
-source("vFI_functions.R")
-source("vFI_utils.R")
+source("Code/vFI_functions.R")
+source("Code/vFI_utils.R")
 
 synthetic_experiment <- function(nsim,expt,data, data_f = ""){
 

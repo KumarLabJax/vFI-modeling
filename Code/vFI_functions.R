@@ -8,7 +8,41 @@ read_data <- function(data,summary_phenotypes,type){
 		return(df)
 
 
-	} else {
+	} else if (type == "DO"){
+
+	    median_gait_measures_linear <- c("median_angular_velocity","median_base_tail_lateral_displacement","median_limb_duty_factor","median_nose_lateral_displacement","median_speed_cm_per_sec","median_step_length1","median_step_length2","median_step_width","median_stride_length","median_tip_tail_lateral_displacement")
+		iqr_gait_measures_linear <- c("angular_velocity_iqr","base_tail_lateral_displacement_iqr","limb_duty_factor_iqr","nose_lateral_displacement_iqr","speed_cm_per_sec_iqr","step_length1_iqr","step_length2_iqr","step_width_iqr","stride_length_iqr","tip_tail_lateral_displacement_iqr")
+		OFA_measures <- c("stride_count","Distance.cm.sc","center_time_secs","periphery_time_secs","corner_time_secs","center_distance_cm","periphery_distance_cm","corner_distance_cm","grooming_number_bouts","grooming_duration_secs")
+		engineered_features_median <- c("dAC_median","dB_median","aABC_median","dAC_nongait_median","dB_nongait_median","aABC_nongait_median")
+		engineered_features_stdev <- c("dAC_stdev","dB_stdev","aABC_stdev","dAC_nongait_stdev","dB_nongait_stdev","aABC_nongait_stdev")
+		rearpaw_pose_measures <- c("median_rearpaw")
+		rears_measures <- c("rear_count","rears_0_5")
+		ellipsefit_measures <- c("median_width", "median_length")
+	
+		data <- data[, -which(names(data) %in% c("NetworkFilename", "VideoDate", "DaysSurvival_vid","DOE", "Type", "collection_date", "FIdate", "Test.Difference"))]
+		#data[,c("NetworkFilename", "VideoDate", "Diet", "DaysSurvival_vid","DOE", "Type", "collection_date", "FIdate", "Test.Difference"):=NULL]
+		df <- data[, names(data) %in% c("MouseID", "CFI", "age_in_weeks", "Diet", median_gait_measures_linear, iqr_gait_measures_linear, OFA_measures, engineered_features_median, engineered_features_stdev, ellipsefit_measures, rears_measures, rearpaw_pose_measures)]
+		#df <- data[, c("MouseID", "CFI", "age_in_weeks", ..median_gait_measures_linear, ..iqr_gait_measures_linear, ..OFA_measures, ..engineered_features_median, ..engineered_features_stdev, ..ellipsefit_measures, ..rears_measures, ..rearpaw_pose_measures)]
+		names(df)[names(df) %in% c("CFI", "age_in_weeks")] <- c("score", "TestAge")
+		#setnames(df, c("CFI", "age_in_weeks"), c("score", "TestAge"))
+
+		#df[, lapply(.SD, function(x) sum(is.na(x))), .SDcols = 1:ncol(df)]
+		df <- df[,-which(names(df) %in% c("dB_nongait_stdev"))]
+		#df[, dB_nongait_stdev := NULL] #remove dB_nongait_stdev since it contains missing values for 178 mice
+
+		df <- df[complete.cases(df),]
+		df$Diet <- as.factor(df$Diet)
+		df$MouseID <- as.factor(df$MouseID)
+		df$rear_count <- as.double(df$rear_count)
+		df$rears_0_5 <- as.double(df$rears_0_5)
+		df$grooming_number_bouts <- as.double(df$grooming_number_bouts)
+		df$TestAge <- as.double(df$TestAge)
+		df$stride_count <- as.double(df$stride_count)
+		return(df)
+
+	}
+
+	else {
 
 		df <- data
 		#df$Tester <- df$Collected.By
@@ -85,6 +119,13 @@ preprocess_data <- function(df, type){
 		df <- df[,-which(names(df) %in% c("Tester","Sex","Weight","Batch","NetworkFilename"))]
 		return(df)
 
+
+	} else if (type == "DO") {
+
+		mod.lmm <- lme4::lmer(score ~ (1|Diet), data = df[!duplicated(df$MouseID),])
+		df$score <- ifelse(df$Diet == "1D", df$score - ranef(mod.lmm)$Diet[1,], ifelse(df$Diet == "20", df$score - ranef(mod.lmm)$Diet[2,], ifelse(df$Diet == "2D", df$score - ranef(mod.lmm)$Diet[3,], ifelse(df$Diet == "40", df$score - ranef(mod.lmm)$Diet[4,], df$score - ranef(mod.lmm)$Diet[5,]))))
+		df <- df[,-which(names(df) %in% c("Diet"))]
+		return(list(df = df))
 
 	} else {
 		mod.lmm <- lmer(score ~ TestAge + Weight + Sex + (1|Tester) + (1|Batch), data = df[!duplicated(df$MouseID),]) #mA
@@ -271,7 +312,7 @@ fit_models <- function(traindata,yname,expt = ""){
 		enet <- caret::train(y=Ytrain,x=Xtrain, preProcess = c("BoxCox"), method="enet",trControl=trainControl(method="repeatedcv",repeats=1),tuneLength=10)
 		svm <- caret::train(y=Ytrain, x=Xtrain, preProcess = c("BoxCox"), method = "svmLinear",trControl = trainControl(method="repeatedcv",repeats=1))
 		rf <- grf::regression_forest(Xtrain, Ytrain, tune.parameters = "all",honesty=FALSE)	
-		xgb <- caret::train(y=Ytrain, x=Xtrain, preProcess = c("BoxCox"), method='xgbTree', objective='reg:squarederror',trControl=trainControl(method='repeatedcv',repeats=1))
+		xgb <- caret::train(y=Ytrain, x=Xtrain, preProcess = c("BoxCox"), method='xgbTree', objective='reg:squarederror',trControl=trainControl(method='repeatedcv',repeats=1), verbosity = 0)
 
 		return(list(enet = enet, svm = svm, rf = rf, xgb = xgb))
 	} else if (expt == "IV") {
@@ -341,7 +382,7 @@ performance_measure <- function(models,yname,testdata, expt = ""){
 		rmse_Q1 <- c(sqrt(mean((Ytest-age_linear_hat_Q1)^2)),sqrt(mean((Ytest-age_nonlinear_hat_Q1)^2)),sqrt(mean((Ytest-rfhat_Q1)^2)),sqrt(mean((Ytest-rf_age_hat_Q1)^2)))
 		R2_Q1 <- c(cor(Ytest,age_linear_hat_Q1)^2,cor(Ytest,age_nonlinear_hat_Q1)^2,cor(Ytest,rfhat_Q1)^2,cor(Ytest,rf_age_hat_Q1)^2)
 
-list <- list()		mae_Q3 <- c(mean(abs(Ytest-age_linear_hat_Q3)),mean(abs(Ytest-age_nonlinear_hat_Q3)),mean(abs(Ytest-rfhat_Q3)),mean(abs(Ytest-rf_age_hat_Q3)))
+		mae_Q3 <- c(mean(abs(Ytest-age_linear_hat_Q3)),mean(abs(Ytest-age_nonlinear_hat_Q3)),mean(abs(Ytest-rfhat_Q3)),mean(abs(Ytest-rf_age_hat_Q3)))
 		rmse_Q3 <- c(sqrt(mean((Ytest-age_linear_hat_Q3)^2)),sqrt(mean((Ytest-age_nonlinear_hat_Q3)^2)),sqrt(mean((Ytest-rfhat_Q3)^2)),sqrt(mean((Ytest-rf_age_hat_Q3)^2)))
 		R2_Q3 <- c(cor(Ytest,age_linear_hat_Q3)^2,cor(Ytest,age_nonlinear_hat_Q3)^2,cor(Ytest,rfhat_Q3)^2,cor(Ytest,rf_age_hat_Q3)^2)
 

@@ -1,6 +1,7 @@
 # A machine vision based frailty index for mice
 
 ## Table of Contents
+- [Features] (#features)
 - [Requirements](#requirements)
 - [Load packages](#load-packages)
 - [Load functions](#load-functions)
@@ -12,6 +13,9 @@
 - [Plot results](#plot-results)
 - [References](#references)
 
+## Features
+
+The scripts to generate features used here originate as output from this other repo: https://github.com/KumarLabJax/vFI-features. 
 
 ## Requirements
 This program requires the following R packages: 

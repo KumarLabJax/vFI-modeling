@@ -21,13 +21,16 @@ read_data <- function(data,summary_phenotypes,type){
 	
 		data <- data[, -which(names(data) %in% c("NetworkFilename", "VideoDate", "DaysSurvival_vid","DOE", "Type", "collection_date", "FIdate", "Test.Difference"))]
 		#data[,c("NetworkFilename", "VideoDate", "Diet", "DaysSurvival_vid","DOE", "Type", "collection_date", "FIdate", "Test.Difference"):=NULL]
+		names(data)[names(data) %in% c("AgeAtVid")] <- "age_in_weeks"
 		df <- data[, names(data) %in% c("MouseID", "CFI", "age_in_weeks", "Diet", median_gait_measures_linear, iqr_gait_measures_linear, OFA_measures, engineered_features_median, engineered_features_stdev, ellipsefit_measures, rears_measures, rearpaw_pose_measures)]
 		#df <- data[, c("MouseID", "CFI", "age_in_weeks", ..median_gait_measures_linear, ..iqr_gait_measures_linear, ..OFA_measures, ..engineered_features_median, ..engineered_features_stdev, ..ellipsefit_measures, ..rears_measures, ..rearpaw_pose_measures)]
-		names(df)[names(df) %in% c("CFI", "age_in_weeks")] <- c("score", "TestAge")
+		names(df)[names(df) == "CFI"] <- "score"
+		names(df)[names(df) == "age_in_weeks"] <- "TestAge"
+	
 		#setnames(df, c("CFI", "age_in_weeks"), c("score", "TestAge"))
 
 		#df[, lapply(.SD, function(x) sum(is.na(x))), .SDcols = 1:ncol(df)]
-		df <- df[,-which(names(df) %in% c("dB_nongait_stdev"))]
+		#df <- df[,-which(names(df) %in% c("dB_nongait_stdev"))]
 		#df[, dB_nongait_stdev := NULL] #remove dB_nongait_stdev since it contains missing values for 178 mice
 
 		df <- df[complete.cases(df),]
@@ -168,7 +171,30 @@ train_test_data <- function(df,yname,prop,seed,type){
 		traindata_sd <- as.numeric(sapply(traindata[,setdiff(names(sapply(traindata,is.numeric)), paste0(yname))], sd))
 		traindata[,setdiff(names(sapply(traindata,is.numeric)), paste0(yname))] <- scale(traindata[,setdiff(names(sapply(traindata,is.numeric)), paste0(yname))], center = TRUE, scale = TRUE)
 		testdata[,setdiff(names(sapply(testdata,is.numeric)), paste0(yname))] <- scale(testdata[,setdiff(names(sapply(testdata,is.numeric)), paste0(yname))], center = traindata_mean, scale = traindata_sd)
-	} else {
+	} else if(type == "transformed") {
+		if (yname == "score"){
+			df0 <- do.call(rbind, lapply(split(df, df$MouseID), function(x) x[sample(nrow(x), 1),]))
+			train <- caret::createDataPartition(df0[,paste0(yname)], p = prop, list = FALSE)
+			test <- setdiff(1:nrow(df0),train)
+			dfTrain <- df[df$MouseID %in% df0[train,'MouseID'],]
+			dfTest <- df[df$MouseID %in% df0[test,'MouseID'],]
+			traindata <- dfTrain[,-which(names(dfTrain) %in% c("MouseID","TestAge"))]
+			testdata <- dfTest[,-which(names(dfTest) %in% c("MouseID","TestAge"))]
+			traindata_mean <- as.numeric(sapply(traindata[,setdiff(names(sapply(traindata,is.numeric)), paste0(yname))], mean))
+			traindata_sd <- as.numeric(sapply(traindata[,setdiff(names(sapply(traindata,is.numeric)), paste0(yname))], sd))
+			traindata[,setdiff(names(sapply(traindata,is.numeric)), paste0(yname))] <- scale(traindata[,setdiff(names(sapply(traindata,is.numeric)), paste0(yname))], center = TRUE, scale = TRUE)
+			testdata[,setdiff(names(sapply(testdata,is.numeric)), paste0(yname))] <- scale(testdata[,setdiff(names(sapply(testdata,is.numeric)), paste0(yname))], center = traindata_mean, scale = traindata_sd)
+			
+
+
+
+
+
+		}
+
+	}
+
+	else {
 
 	if (yname == "score"){
 		df0 <- do.call(rbind, lapply(split(df, df$MouseID), function(x) x[sample(nrow(x), 1),]))

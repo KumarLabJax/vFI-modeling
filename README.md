@@ -1,7 +1,7 @@
 # A machine vision based frailty index for mice
 
 ## Table of Contents
-- [Features] (#features)
+- [Features](#features)
 - [Requirements](#requirements)
 - [Load packages](#load-packages)
 - [Load functions](#load-functions)
